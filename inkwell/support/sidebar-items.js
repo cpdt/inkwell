@@ -1,0 +1,1 @@
+initSidebarItems({"fn":[["is_multithreaded",""],["load_library_permanently",""],["shutdown_llvm",""]],"mod":[["error_handling",""]],"struct":[["LLVMString","An owned LLVM String. Also known as a LLVM Message"]]});
