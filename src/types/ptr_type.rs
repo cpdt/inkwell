@@ -1,11 +1,11 @@
-use llvm_sys::core::{LLVMGetPointerAddressSpace, LLVMConstNull};
+use llvm_sys::core::{LLVMGetPointerAddressSpace, LLVMConstNull, LLVMGetElementType};
 use llvm_sys::prelude::LLVMTypeRef;
 
 use AddressSpace;
 use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
-use types::{Type, BasicType, ArrayType, FunctionType, VectorType};
+use types::{Type, BasicType, ArrayType, FunctionType, VectorType, BasicTypeEnum};
 use values::{PointerValue, IntValue};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -50,6 +50,13 @@ impl PointerType {
         unsafe {
             LLVMGetPointerAddressSpace(self.as_type_ref()).into()
         }
+    }
+
+    pub fn element_type(&self) -> BasicTypeEnum {
+        let element_type_ref = unsafe {
+            LLVMGetElementType(self.as_type_ref())
+        };
+        BasicTypeEnum::new(element_type_ref)
     }
 
     pub fn print_to_string(&self) -> LLVMString {

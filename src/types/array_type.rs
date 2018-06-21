@@ -1,11 +1,11 @@
-use llvm_sys::core::{LLVMConstArray, LLVMConstNull, LLVMGetArrayLength};
+use llvm_sys::core::{LLVMConstArray, LLVMConstNull, LLVMGetArrayLength, LLVMGetElementType};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use AddressSpace;
 use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
-use types::{Type, BasicType, PointerType, FunctionType};
+use types::{Type, BasicType, PointerType, FunctionType, BasicTypeEnum};
 use values::{BasicValue, ArrayValue, PointerValue, IntValue};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -79,6 +79,13 @@ impl ArrayType {
         unsafe {
             LLVMGetArrayLength(self.as_type_ref())
         }
+    }
+
+    pub fn element_type(&self) -> BasicTypeEnum {
+        let element_type_ref = unsafe {
+            LLVMGetElementType(self.as_type_ref())
+        };
+        BasicTypeEnum::new(element_type_ref)
     }
 
     pub fn print_to_string(&self) -> LLVMString {

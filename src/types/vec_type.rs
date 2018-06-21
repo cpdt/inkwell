@@ -1,9 +1,9 @@
-use llvm_sys::core::{LLVMConstVector, LLVMConstNull, LLVMGetVectorSize};
+use llvm_sys::core::{LLVMConstVector, LLVMConstNull, LLVMGetVectorSize, LLVMGetElementType};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use support::LLVMString;
 use types::traits::AsTypeRef;
-use types::Type;
+use types::{Type, BasicTypeEnum};
 use values::{BasicValue, PointerValue, VectorValue, IntValue};
 
 // REVIEW: vec_type() is impl for IntType & FloatType. Need to
@@ -42,6 +42,13 @@ impl VectorType {
         unsafe {
             LLVMGetVectorSize(self.as_type_ref())
         }
+    }
+
+    pub fn element_type(&self) -> BasicTypeEnum {
+        let element_type_ref = unsafe {
+            LLVMGetElementType(self.as_type_ref())
+        };
+        BasicTypeEnum::new(element_type_ref)
     }
 
     // REVIEW:
