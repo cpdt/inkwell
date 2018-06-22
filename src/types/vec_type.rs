@@ -56,10 +56,6 @@ impl VectorType {
         self.vec_type.ptr_type(address_space)
     }
 
-    pub fn fn_type(&self, param_types: &[&BasicType], is_var_args: bool) -> FunctionType {
-        self.vec_type.fn_type(param_types, is_var_args)
-    }
-
     // REVIEW:
     // TypeSafety v2 (GH Issue #8) could help here by constraining
     // sub-types to be the same across the board. For now, we could
