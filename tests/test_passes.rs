@@ -139,7 +139,10 @@ fn test_pass_registry() {
     pass_registry.initialize_scalar_opts();
     pass_registry.initialize_obj_carc_opts();
     pass_registry.initialize_vectorization();
+
+    #[cfg(not(feature = "llvm6-0"))]
     pass_registry.initialize_inst_combine();
+
     pass_registry.initialize_ipo();
     pass_registry.initialize_instrumentation();
     pass_registry.initialize_analysis();

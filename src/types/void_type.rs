@@ -52,7 +52,7 @@ impl VoidType {
     }
 
     // See Type::print_to_stderr note on 5.0+ status
-    #[cfg(not(any(feature = "llvm3-6", feature = "llvm5-0")))]
+    #[cfg(not(any(feature = "llvm3-6", feature = "llvm5-0", feature = "llvm6-0")))]
     pub fn print_to_stderr(&self) {
         self.void_type.print_to_stderr()
     }

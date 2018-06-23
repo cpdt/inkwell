@@ -584,6 +584,8 @@ impl PassRegistry {
         }
     }
 
+    // Looks like this was removed in LLVM 6
+    #[cfg(not(feature = "llvm6-0"))]
     pub fn initialize_inst_combine(&self) {
         unsafe {
             LLVMInitializeInstCombine(self.pass_registry)
