@@ -5,7 +5,7 @@ use llvm_sys::{LLVMTypeKind, LLVMAtomicOrdering};
 
 use {IntPredicate, FloatPredicate};
 use basic_block::BasicBlock;
-use values::{AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, InstructionOpcode};
+use values::{AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, StructValue, InstructionOpcode};
 use types::{AsTypeRef, BasicType, PointerType, IntMathType, FloatMathType, PointerMathType};
 
 use std::ffi::CString;
@@ -914,7 +914,7 @@ impl Builder {
     // REVIEW: How does LLVM treat out of bound index? Maybe we should return an Option?
     // or is that only in bounds GEP
     // REVIEW: Should this be AggregatePointerValue?
-    pub fn build_extract_value(&self, value: &AggregateValue, index: u32, name: &str) -> BasicValueEnum {
+    pub fn build_extract_value(&self, value: impl AggregateValue, index: u32, name: &str) -> BasicValueEnum {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
@@ -924,15 +924,14 @@ impl Builder {
         BasicValueEnum::new(value)
     }
 
-    // REVIEW: Should this be AggregatePointerValue instead of just PointerValue?
-    pub fn build_insert_value(&self, value: &BasicValue, ptr: &PointerValue, index: u32, name: &str) -> InstructionValue {
+    pub fn build_insert_value<T: AggregateValue>(&self, agg: T, value: &BasicValue, index: u32, name: &str) -> T {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMBuildInsertValue(self.builder, value.as_value_ref(), ptr.as_value_ref(), index, c_string.as_ptr())
+            LLVMBuildInsertValue(self.builder, agg.as_value_ref(), value.as_value_ref(), index, c_string.as_ptr())
         };
 
-        InstructionValue::new(value)
+        T::new(value)
     }
 
     pub fn build_extract_element(&self, vector: &VectorValue, index: &IntValue, name: &str) -> BasicValueEnum {

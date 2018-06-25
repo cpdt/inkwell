@@ -23,6 +23,21 @@ macro_rules! trait_value_set {
     );
 }
 
+macro_rules! special_trait_set {
+    ($trait_name:ident: $($args:ident),*) => (
+        $(
+            impl $trait_name for $args {
+                fn new(value: LLVMValueRef) -> Self {
+                    $args::new(value)
+                }
+            }
+        )*
+
+        // REVIEW: Possible encompassing methods to implement:
+        // as_instruction, is_sized, ge/set metadata methods
+    );
+}
+
 macro_rules! math_trait_value_set {
     ($trait_name:ident: $(($value_type:ident => $base_type:ident)),*) => (
         $(
@@ -42,6 +57,8 @@ pub trait AggregateValue: BasicValue {
     fn as_aggregate_value_enum(&self) -> AggregateValueEnum {
         AggregateValueEnum::new(self.as_value_ref())
     }
+
+    fn new(value: LLVMValueRef) -> Self;
 }
 
 /// Represents a basic value, which can be used both by itself, or in an `AggregateValue`.
@@ -77,7 +94,7 @@ pub trait AnyValue: AsValueRef + Debug {
     }
 }
 
-trait_value_set! {AggregateValue: ArrayValue, AggregateValueEnum, StructValue}
+special_trait_set! {AggregateValue: ArrayValue, AggregateValueEnum, StructValue}
 trait_value_set! {AnyValue: AnyValueEnum, BasicValueEnum, AggregateValueEnum, ArrayValue, IntValue, FloatValue, GlobalValue, PhiValue, PointerValue, FunctionValue, StructValue, VectorValue, InstructionValue}
 trait_value_set! {BasicValue: ArrayValue, BasicValueEnum, AggregateValueEnum, IntValue, FloatValue, GlobalValue, StructValue, PointerValue, VectorValue}
 math_trait_value_set! {IntMathValue: (IntValue => IntType), (VectorValue => VectorType)}
