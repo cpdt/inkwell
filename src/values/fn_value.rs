@@ -1,8 +1,9 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMTypeOf, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMGetReturnType, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetElementType, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetEntryBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC};
+use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMTypeOf, LLVMGetPreviousFunction, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMGetReturnType, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetElementType, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetEntryBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC, LLVMAddAttributeAtIndex};
 #[cfg(not(feature = "llvm3-6"))]
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
+use llvm_sys::{LLVMAttributeReturnIndex, LLVMAttributeFunctionIndex};
 
 use std::ffi::{CStr, CString};
 use std::mem::forget;
@@ -14,6 +15,7 @@ use support::LLVMString;
 use types::{BasicTypeEnum, FunctionType};
 use values::traits::AsValueRef;
 use values::{BasicValueEnum, Value, MetadataValue};
+use attribute::Attribute;
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct FunctionValue {
@@ -314,6 +316,24 @@ impl FunctionValue {
 
     pub fn replace_all_uses_with(&self, other: &FunctionValue) {
         self.fn_value.replace_all_uses_with(other.as_value_ref())
+    }
+
+    pub fn add_attribute(&self, attrib: Attribute) {
+        unsafe {
+            LLVMAddAttributeAtIndex(self.as_value_ref(), LLVMAttributeFunctionIndex, attrib.attr);
+        }
+    }
+
+    pub fn add_return_attribute(&self, attrib: Attribute) {
+        unsafe {
+            LLVMAddAttributeAtIndex(self.as_value_ref(), LLVMAttributeReturnIndex, attrib.attr);
+        }
+    }
+
+    pub fn add_param_attribute(&self, param: u32, attrib: Attribute) {
+        unsafe {
+            LLVMAddAttributeAtIndex(self.as_value_ref(), 1 + param, attrib.attr);
+        }
     }
 }
 

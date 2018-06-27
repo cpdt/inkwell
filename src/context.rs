@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext};
+use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext, LLVMCreateEnumAttribute, LLVMCreateStringAttribute};
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef};
 use llvm_sys::ir_reader::LLVMParseIRInContext;
 
@@ -9,6 +9,7 @@ use module::Module;
 use support::LLVMString;
 use types::{BasicType, FloatType, IntType, StructType, VoidType};
 use values::{AsValueRef, BasicValue, FunctionValue, StructValue, MetadataValue};
+use attribute::{AttrKind, Attribute};
 
 use std::ffi::{CStr, CString};
 use std::mem::forget;
@@ -323,6 +324,25 @@ impl Context {
         unsafe {
             LLVMGetMDKindIDInContext(*self.context, key.as_ptr() as *const i8, key.len() as u32)
         }
+    }
+
+    pub fn get_enum_attr(&self, kind: AttrKind, value: u64) -> Attribute {
+        let attr = unsafe {
+            LLVMCreateEnumAttribute(*self.context, kind as u32, value)
+        };
+
+        Attribute::new(attr)
+    }
+
+    pub fn get_string_attr(&self, name: &str, value: &str) -> Attribute {
+        let name_c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
+        let value_c_string = CString::new(value).expect("Conversion to CString failed unexpectedly");
+
+        let attr = unsafe {
+            LLVMCreateStringAttribute(*self.context, name_c_string.as_ptr(), name.len() as u32, value_c_string.as_ptr(), value.len() as u32)
+        };
+
+        Attribute::new(attr)
     }
 
     // LLVM 3.9+
