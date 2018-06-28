@@ -5,6 +5,7 @@ use llvm_sys::prelude::LLVMAttributeRef;
 #[derive(PartialEq, Eq, Clone, Copy, Debug)]
 #[repr(C)]
 pub enum AttrKind {
+    None,
     Alignment,
     AllocSize,
     AlwaysInline,
