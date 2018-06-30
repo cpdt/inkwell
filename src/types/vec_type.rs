@@ -4,7 +4,7 @@ use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 use AddressSpace;
 use support::LLVMString;
 use types::traits::AsTypeRef;
-use types::{Type, BasicTypeEnum, PointerType, BasicType, FunctionType};
+use types::{Type, BasicTypeEnum, PointerType, BasicType, FunctionType, ArrayType};
 use values::{BasicValue, PointerValue, VectorValue, IntValue};
 
 // REVIEW: vec_type() is impl for IntType & FloatType. Need to
@@ -54,6 +54,10 @@ impl VectorType {
 
     pub fn ptr_type(&self, address_space: AddressSpace) -> PointerType {
         self.vec_type.ptr_type(address_space)
+    }
+
+    pub fn array_type(&self, size: u32) -> ArrayType {
+        self.vec_type.array_type(size)
     }
 
     // REVIEW:
