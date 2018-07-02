@@ -1,11 +1,11 @@
-use llvm_sys::core::{LLVMConstVector, LLVMConstNull, LLVMGetVectorSize, LLVMGetElementType};
+use llvm_sys::core::{LLVMConstVector, LLVMConstNull, LLVMGetVectorSize, LLVMGetElementType, LLVMConstArray};
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use AddressSpace;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, BasicTypeEnum, PointerType, BasicType, FunctionType, ArrayType};
-use values::{BasicValue, PointerValue, VectorValue, IntValue};
+use values::{BasicValue, PointerValue, VectorValue, IntValue, ArrayValue};
 
 // REVIEW: vec_type() is impl for IntType & FloatType. Need to
 // find out if it is valid for other types too. Maybe PointerType?
@@ -77,6 +77,16 @@ impl VectorType {
         };
 
         VectorValue::new(vec_value)
+    }
+
+    pub fn const_array(&self, values: &[VectorValue]) -> ArrayValue {
+        let mut values: Vec<_> = values.iter().map(|val| val.as_value_ref()).collect();
+
+        let value = unsafe {
+            LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32)
+        };
+
+        ArrayValue::new(value)
     }
 
     pub fn const_null_ptr(&self) -> PointerValue {

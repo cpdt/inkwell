@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMGetPointerAddressSpace, LLVMConstNull, LLVMGetElementType};
+use llvm_sys::core::{LLVMGetPointerAddressSpace, LLVMConstNull, LLVMGetElementType, LLVMConstArray};
 use llvm_sys::prelude::LLVMTypeRef;
 
 use AddressSpace;
@@ -6,7 +6,7 @@ use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, ArrayType, FunctionType, VectorType, BasicTypeEnum};
-use values::{PointerValue, IntValue};
+use values::{PointerValue, IntValue, ArrayValue};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct PointerType {
@@ -79,6 +79,16 @@ impl PointerType {
         };
 
         PointerValue::new(null)
+    }
+
+    pub fn const_array(&self, values: &[PointerValue]) -> ArrayValue {
+        let mut values: Vec<_> = values.iter().map(|val| val.as_value_ref()).collect();
+
+        let value = unsafe {
+            LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32)
+        };
+
+        ArrayValue::new(value)
     }
 
     pub fn get_undef(&self) -> PointerValue {

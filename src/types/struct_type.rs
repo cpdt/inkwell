@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMConstNamedStruct, LLVMConstStruct, LLVMConstNull, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody};
+use llvm_sys::core::{LLVMConstNamedStruct, LLVMConstStruct, LLVMConstNull, LLVMStructType, LLVMCountStructElementTypes, LLVMGetStructElementTypes, LLVMGetStructName, LLVMIsPackedStruct, LLVMIsOpaqueStruct, LLVMStructSetBody, LLVMConstArray};
 #[cfg(not(feature = "llvm3-6"))]
 use llvm_sys::core::LLVMStructGetTypeAtIndex;
 use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
@@ -11,7 +11,7 @@ use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, BasicTypeEnum, ArrayType, PointerType, FunctionType, VectorType};
-use values::{BasicValue, StructValue, PointerValue, IntValue};
+use values::{BasicValue, StructValue, PointerValue, IntValue, ArrayValue};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct StructType {
@@ -59,6 +59,16 @@ impl StructType {
         };
 
         StructValue::new(value)
+    }
+
+    pub fn const_array(&self, values: &[StructValue]) -> ArrayValue {
+        let mut values: Vec<_> = values.iter().map(|val| val.as_value_ref()).collect();
+
+        let value = unsafe {
+            LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32)
+        };
+
+        ArrayValue::new(value)
     }
 
     pub fn const_struct(values: &[&BasicValue], packed: bool) -> StructValue {

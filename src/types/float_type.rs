@@ -1,13 +1,13 @@
-use llvm_sys::core::{LLVMConstReal, LLVMConstNull, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMPPCFP128Type, LLVMConstRealOfStringAndSize};
+use llvm_sys::core::{LLVMConstReal, LLVMConstNull, LLVMHalfType, LLVMFloatType, LLVMDoubleType, LLVMFP128Type, LLVMPPCFP128Type, LLVMConstRealOfStringAndSize, LLVMConstArray};
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfFloat;
-use llvm_sys::prelude::LLVMTypeRef;
+use llvm_sys::prelude::{LLVMTypeRef, LLVMValueRef};
 
 use AddressSpace;
 use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, PointerType, FunctionType, BasicType, ArrayType, VectorType};
-use values::{FloatValue, GenericValue, PointerValue, IntValue};
+use values::{FloatValue, GenericValue, PointerValue, IntValue, ArrayValue};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct FloatType {
@@ -41,6 +41,16 @@ impl FloatType {
         };
 
         FloatValue::new(value)
+    }
+
+    pub fn const_array(&self, values: &[FloatValue]) -> ArrayValue {
+        let mut values: Vec<_> = values.iter().map(|val| val.as_value_ref()).collect();
+
+        let value = unsafe {
+            LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32)
+        };
+
+        ArrayValue::new(value)
     }
 
     // REVIEW: What happens when string is invalid? Nullptr?

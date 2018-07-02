@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMConstInt, LLVMConstNull, LLVMConstAllOnes, LLVMIntType, LLVMGetIntTypeWidth, LLVMConstIntOfStringAndSize, LLVMConstIntOfArbitraryPrecision};
+use llvm_sys::core::{LLVMInt1Type, LLVMInt8Type, LLVMInt16Type, LLVMInt32Type, LLVMInt64Type, LLVMConstInt, LLVMConstNull, LLVMConstArray, LLVMConstAllOnes, LLVMIntType, LLVMGetIntTypeWidth, LLVMConstIntOfStringAndSize, LLVMConstIntOfArbitraryPrecision};
 use llvm_sys::execution_engine::LLVMCreateGenericValueOfInt;
 use llvm_sys::prelude::LLVMTypeRef;
 
@@ -7,7 +7,7 @@ use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, ArrayType, BasicType, VectorType, PointerType, FunctionType};
-use values::{GenericValue, IntValue, PointerValue};
+use values::{GenericValue, IntValue, PointerValue, ArrayValue};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct IntType {
@@ -269,6 +269,16 @@ impl IntType {
         };
 
         IntValue::new(null)
+    }
+
+    pub fn const_array(&self, values: &[IntValue]) -> ArrayValue {
+        let mut values: Vec<_> = values.iter().map(|val| val.as_value_ref()).collect();
+
+        let value = unsafe {
+            LLVMConstArray(self.as_type_ref(), values.as_mut_ptr(), values.len() as u32)
+        };
+
+        ArrayValue::new(value)
     }
 
     pub fn fn_type(&self, param_types: &[&BasicType], is_var_args: bool) -> FunctionType {
