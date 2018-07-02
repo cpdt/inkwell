@@ -6,6 +6,7 @@ use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, BasicTypeEnum, PointerType, BasicType, FunctionType, ArrayType};
 use values::{BasicValue, PointerValue, VectorValue, IntValue, ArrayValue};
+use values::AsValueRef;
 
 // REVIEW: vec_type() is impl for IntType & FloatType. Need to
 // find out if it is valid for other types too. Maybe PointerType?

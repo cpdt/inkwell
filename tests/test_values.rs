@@ -117,7 +117,6 @@ fn test_set_get_name() {
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
     let ptr_val = bool_type.const_null_ptr();
-    let array_val = array_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[&i8_val, &f128_val], false);
     let vec_val = VectorType::const_vector(&[&i8_val]);
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
@@ -133,7 +132,6 @@ fn test_set_get_name() {
     assert_eq!(f64_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(f128_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(ptr_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(array_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(struct_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(vec_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(ppc_f128_val.get_name(), &*CString::new("").unwrap());
@@ -150,7 +148,6 @@ fn test_set_get_name() {
     f64_val.set_name("my_val9");
     f128_val.set_name("my_val10");
     ptr_val.set_name("my_val11");
-    array_val.set_name("my_val12");
     struct_val.set_name("my_val13");
     vec_val.set_name("my_val14");
     ppc_f128_val.set_name("my_val14");
@@ -166,7 +163,6 @@ fn test_set_get_name() {
     assert_eq!(f64_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(f128_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(ptr_val.get_name(), &*CString::new("").unwrap());
-    assert_eq!(array_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(struct_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(vec_val.get_name(), &*CString::new("").unwrap());
     assert_eq!(ppc_f128_val.get_name(), &*CString::new("").unwrap());
@@ -249,7 +245,6 @@ fn test_undef() {
     let f64_val = f64_type.const_float(0.0);
     let f128_val = f128_type.const_float(0.0);
     let ptr_val = bool_type.const_null_ptr();
-    let array_val = array_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[&i8_val, &f128_val], false);
     let vec_val = VectorType::const_vector(&[&i8_val]);
     let ppc_f128_val = ppc_f128_type.const_float(0.0);
@@ -265,7 +260,6 @@ fn test_undef() {
     assert!(!f64_val.is_undef());
     assert!(!f128_val.is_undef());
     assert!(!ptr_val.is_undef());
-    assert!(!array_val.is_undef());
     assert!(!struct_val.is_undef());
     assert!(!vec_val.is_undef());
     assert!(!ppc_f128_val.is_undef());
@@ -481,7 +475,6 @@ fn test_metadata() {
     let f128_val = f128_type.const_float(0.0);
     // let ppc_f128_val = ppc_f128_type.const_float(0.0);
     let ptr_val = bool_type.ptr_type(AddressSpace::Generic).const_null();
-    let array_val = array_type.const_array(&[f64_val]);
     let struct_val = context.const_struct(&[&i8_val, &f128_val], false);
     let vec_val = VectorType::const_vector(&[&i8_val]);
     let fn_val = module.add_function("my_fn", &fn_type, None);
@@ -559,16 +552,6 @@ fn test_metadata() {
     assert_eq!(md_node_values.len(), 2);
     assert_eq!(md_node_values[0].as_int_value(), &bool_val);
     assert_eq!(md_node_values[1].as_float_value(), &f32_val);
-
-    array_val.set_metadata(&md_string, 2);
-
-    assert!(array_val.has_metadata());
-    assert!(array_val.get_metadata(1).is_none());
-
-    let md_node_values = array_val.get_metadata(2).unwrap().get_node_values();
-
-    assert_eq!(md_node_values.len(), 1);
-    assert_eq!(md_node_values[0].as_metadata_value().get_string_value(), md_string.get_string_value());
 
     struct_val.set_metadata(&md_node, 4);
 
@@ -754,28 +737,6 @@ fn test_value_copies() {
     let i8_value_copy = i8_value;
 
     assert_eq!(i8_value, i8_value_copy);
-}
-
-#[test]
-fn test_global_byte_array() {
-    let context = Context::create();
-    let module = context.create_module("my_mod");
-    let my_str = "Hello, World";
-    let i8_type = context.i8_type();
-    let i8_array_type = i8_type.array_type(my_str.len() as u32);
-    let global_string = module.add_global(&i8_array_type, Some(AddressSpace::Generic), "message");
-
-    let mut chars = Vec::with_capacity(my_str.len());
-
-    for chr in my_str.bytes() {
-        chars.push(i8_type.const_int(chr as u64, false));
-    }
-
-    let const_str_array = i8_array_type.const_array(chars.as_ref());
-
-    global_string.set_initializer(&const_str_array);
-
-    // TODO: Assert something?
 }
 
 #[test]

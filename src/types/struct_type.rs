@@ -12,6 +12,7 @@ use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, BasicType, BasicTypeEnum, ArrayType, PointerType, FunctionType, VectorType};
 use values::{BasicValue, StructValue, PointerValue, IntValue, ArrayValue};
+use values::AsValueRef;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct StructType {

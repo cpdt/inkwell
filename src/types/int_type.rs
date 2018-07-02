@@ -8,6 +8,7 @@ use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, ArrayType, BasicType, VectorType, PointerType, FunctionType};
 use values::{GenericValue, IntValue, PointerValue, ArrayValue};
+use values::AsValueRef;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct IntType {

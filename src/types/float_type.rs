@@ -8,6 +8,7 @@ use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, PointerType, FunctionType, BasicType, ArrayType, VectorType};
 use values::{FloatValue, GenericValue, PointerValue, IntValue, ArrayValue};
+use values::AsValueRef;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct FloatType {
