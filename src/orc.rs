@@ -14,7 +14,6 @@ pub struct OrcError<'a> {
     message: &'a str
 }
 
-#[derive(Debug, PartialEq, Eq)]
 pub struct MangledSymbol {
     ptr: *mut c_char
 }
@@ -49,7 +48,7 @@ impl fmt::Debug for MangledSymbol {
 
 impl fmt::Display for MangledSymbol {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        write!(f, "{}", self.deref())
+        write!(f, "{:?}", self.deref())
     }
 }
 
@@ -76,7 +75,9 @@ pub type OrcModuleKey = LLVMOrcModuleHandle;
 
 impl Orc {
     pub fn link_in_jit() {
-        LLVMLinkInMCJIT();
+        unsafe {
+            LLVMLinkInMCJIT();
+        }
     }
 
     pub fn new(target: TargetMachine) -> Self {
@@ -131,7 +132,7 @@ impl Orc {
             LLVMOrcGetMangledSymbol(self.jit, &mut mangled_ptr, c_string.as_ptr());
         }
 
-        MangledSymbol { content: mangled_ptr }
+        MangledSymbol::new(mangled_ptr)
     }
 }
 
