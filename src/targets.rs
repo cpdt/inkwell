@@ -343,10 +343,10 @@ impl TargetMachine {
         }
     }
 
-    pub fn get_default_triple() -> &'static CStr { // FIXME: Probably not static?
-        unsafe {
-            CStr::from_ptr(LLVMGetDefaultTargetTriple())
-        }
+    pub fn get_default_triple() -> LLVMString {
+        LLVMString::new(unsafe {
+            LLVMGetDefaultTargetTriple()
+        })
     }
 
     pub fn get_cpu(&self) -> &CStr {
