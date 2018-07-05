@@ -98,7 +98,7 @@ impl Orc {
         }
     }
 
-    pub fn add_module(&mut self, module: &Module, eager: bool) -> Result<OrcModuleKey, OrcError> {
+    pub fn add_module(&self, module: &Module, eager: bool) -> Result<OrcModuleKey, OrcError> {
         let shared_ref = module.make_shared();
         let mut module_handle: OrcModuleKey = unsafe { uninitialized() };
         let error_code = if eager {
