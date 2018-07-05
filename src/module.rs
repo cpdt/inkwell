@@ -1,7 +1,7 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
 use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile, LLVMSetModuleInlineAsm};
-use llvm_sys::execution_engine::{LLVMCreateInterpreterForModule, LLVMCreateJITCompilerForModule, LLVMCreateExecutionEngineForModule};
+use llvm_sys::orc::{LLVMSharedModuleRef, LLVMOrcMakeSharedModule, LLVMOrcDisposeSharedModuleRef};
 use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
 
@@ -16,7 +16,6 @@ use std::slice::from_raw_parts;
 use {AddressSpace, OptimizationLevel};
 use context::{Context, ContextRef};
 use data_layout::DataLayout;
-use execution_engine::ExecutionEngine;
 use memory_buffer::MemoryBuffer;
 use support::LLVMString;
 use types::{AsTypeRef, BasicType, FunctionType, BasicTypeEnum};
@@ -97,7 +96,7 @@ pub struct Module {
     pub(crate) non_global_context: Option<Context>, // REVIEW: Could we just set context to the global context?
     data_layout: RefCell<Option<DataLayout>>,
     pub(crate) module: Cell<LLVMModuleRef>,
-    pub(crate) owned_by_ee: RefCell<Option<ExecutionEngine>>,
+    pub(crate) shared_ref: RefCell<Option<LLVMSharedModuleRef>>
 }
 
 impl Module {
@@ -107,8 +106,8 @@ impl Module {
         Module {
             module: Cell::new(module),
             non_global_context: context.map(|ctx| Context::new(ctx.context.clone())),
-            owned_by_ee: RefCell::new(None),
             data_layout: RefCell::new(Some(Module::get_borrowed_data_layout(module))),
+            shared_ref: RefCell::new(None)
         }
     }
 
@@ -307,115 +306,6 @@ impl Module {
         unsafe {
             CStr::from_ptr(LLVMGetTarget(self.module.get()))
         }
-    }
-
-    /// Creates an `ExecutionEngine` from this `Module`.
-    ///
-    /// # Example
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::module::Module;
-    /// use inkwell::targets::{InitializationConfig, Target};
-    ///
-    /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
-    ///
-    /// let context = Context::get_global();
-    /// let module = Module::create("my_module");
-    /// let execution_engine = module.create_execution_engine().unwrap();
-    ///
-    /// assert_eq!(module.get_context(), context);
-    /// ```
-    // SubType: ExecutionEngine<?>
-    pub fn create_execution_engine(&self) -> Result<ExecutionEngine, LLVMString> {
-        let mut execution_engine = unsafe { uninitialized() };
-        let mut err_string = unsafe { zeroed() };
-
-        let code = unsafe {
-            LLVMCreateExecutionEngineForModule(&mut execution_engine, self.module.get(), &mut err_string) // Takes ownership of module
-        };
-
-        if code == 1 {
-            return Err(LLVMString::new(err_string));
-        }
-
-        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), false);
-
-        *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
-
-        Ok(execution_engine)
-    }
-
-    /// Creates an interpreter `ExecutionEngine` from this `Module`.
-    ///
-    /// # Example
-    /// ```no_run
-    /// use inkwell::context::Context;
-    /// use inkwell::module::Module;
-    /// use inkwell::targets::{InitializationConfig, Target};
-    ///
-    /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
-    ///
-    /// let context = Context::get_global();
-    /// let module = Module::create("my_module");
-    /// let execution_engine = module.create_interpreter_execution_engine().unwrap();
-    ///
-    /// assert_eq!(module.get_context(), context);
-    /// ```
-    // SubType: ExecutionEngine<Interpreter>
-    pub fn create_interpreter_execution_engine(&self) -> Result<ExecutionEngine, LLVMString> {
-        let mut execution_engine = unsafe { uninitialized() };
-        let mut err_string = unsafe { zeroed() };
-
-        let code = unsafe {
-            LLVMCreateInterpreterForModule(&mut execution_engine, self.module.get(), &mut err_string) // Takes ownership of module
-        };
-
-        if code == 1 {
-            return Err(LLVMString::new(err_string));
-        }
-
-        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), false);
-
-        *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
-
-        Ok(execution_engine)
-    }
-
-    /// Creates a JIT `ExecutionEngine` from this `Module`.
-    ///
-    /// # Example
-    /// ```no_run
-    /// use inkwell::OptimizationLevel;
-    /// use inkwell::context::Context;
-    /// use inkwell::module::Module;
-    /// use inkwell::targets::{InitializationConfig, Target};
-    ///
-    /// Target::initialize_native(&InitializationConfig::default()).expect("Failed to initialize native target");
-    ///
-    /// let context = Context::get_global();
-    /// let module = Module::create("my_module");
-    /// let execution_engine = module.create_jit_execution_engine(OptimizationLevel::None).unwrap();
-    ///
-    /// assert_eq!(module.get_context(), context);
-    /// ```
-    // SubType: ExecutionEngine<Jit>
-    pub fn create_jit_execution_engine(&self, opt_level: OptimizationLevel) -> Result<ExecutionEngine, LLVMString> {
-        let mut execution_engine = unsafe { uninitialized() };
-        let mut err_string = unsafe { zeroed() };
-
-        let code = unsafe {
-            LLVMCreateJITCompilerForModule(&mut execution_engine, self.module.get(), opt_level as u32, &mut err_string) // Takes ownership of module
-        };
-
-        if code == 1 {
-            return Err(LLVMString::new(err_string));
-        }
-
-        let execution_engine = ExecutionEngine::new(Rc::new(execution_engine), true);
-
-        *self.owned_by_ee.borrow_mut() = Some(execution_engine.clone());
-
-        Ok(execution_engine)
     }
 
     pub fn add_global(&self, type_: &BasicType, address_space: Option<AddressSpace>, name: &str) -> GlobalValue {
@@ -636,6 +526,16 @@ impl Module {
 
         Some(GlobalValue::new(value))
     }
+
+    pub(crate) fn make_shared(&self) -> LLVMSharedModuleRef {
+        if let Some(shared_ref) = *self.shared_ref.borrow() {
+            shared_ref
+        } else {
+            let shared_ref = unsafe { LLVMOrcMakeSharedModule(self.module.get()) };
+            *self.shared_ref.borrow_mut() = Some(shared_ref);
+            shared_ref
+        }
+    }
 }
 
 impl Clone for Module {
@@ -652,12 +552,10 @@ impl Clone for Module {
 // which is why DataLayout must be called with `new_borrowed`
 impl Drop for Module {
     fn drop(&mut self) {
-        if self.owned_by_ee.borrow_mut().take().is_none() {
-            unsafe {
-                LLVMDisposeModule(self.module.get());
-            }
+        if let Some(shared_ref) = *self.shared_ref.borrow_mut() {
+            unsafe { LLVMOrcDisposeSharedModuleRef(shared_ref) };
+        } else {
+            unsafe { LLVMDisposeModule(self.module.get()) };
         }
-
-        // Context & EE will drop naturally if they are unique references at this point
     }
 }

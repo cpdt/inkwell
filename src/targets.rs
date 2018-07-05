@@ -404,6 +404,10 @@ impl TargetMachine {
 
         Ok(())
     }
+
+    pub(crate) fn release(self) -> LLVMTargetMachineRef {
+        self.target_machine
+    }
 }
 
 impl Drop for TargetMachine {
