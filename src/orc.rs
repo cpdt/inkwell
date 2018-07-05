@@ -3,7 +3,7 @@ use llvm_sys::execution_engine::LLVMLinkInMCJIT;
 use llvm_sys::target_machine::LLVMTargetHasJIT;
 use targets::TargetMachine;
 use module::Module;
-use std::mem::uninitialized;
+use std::mem::{uninitialized, transmute};
 use std::ffi::{CStr, CString};
 use std::ops::Deref;
 use std::os::raw::c_char;
@@ -73,6 +73,17 @@ pub struct Orc {
 
 pub type OrcModuleKey = LLVMOrcModuleHandle;
 
+extern "C" fn orc_resolve_symbol(name: *const ::libc::c_char, ctx: *mut ::libc::c_void) -> u64 {
+    let orc: &Orc = unsafe { transmute(ctx) };
+
+    let mut address = unsafe { uninitialized() };
+    let error_code = unsafe {
+        LLVMOrcGetSymbolAddress(orc.jit, &mut address, name)
+    };
+    assert_eq!(error_code, LLVMOrcErrorCode::LLVMOrcErrSuccess);
+    address
+}
+
 impl Orc {
     pub fn link_in_jit() {
         unsafe {
@@ -87,16 +98,16 @@ impl Orc {
         }
     }
 
-    pub fn add_module(&self, module: &Module, eager: bool) -> Result<OrcModuleKey, OrcError> {
+    pub fn add_module(&mut self, module: &Module, eager: bool) -> Result<OrcModuleKey, OrcError> {
         let shared_ref = module.make_shared();
         let mut module_handle: OrcModuleKey = unsafe { uninitialized() };
         let error_code = if eager {
             unsafe {
-                LLVMOrcAddEagerlyCompiledIR(self.jit, &mut module_handle, shared_ref, unimplemented!(), unimplemented!())
+                LLVMOrcAddEagerlyCompiledIR(self.jit, &mut module_handle, shared_ref, Some(orc_resolve_symbol), transmute(&self))
             }
         } else {
             unsafe {
-                LLVMOrcAddLazilyCompiledIR(self.jit, &mut module_handle, shared_ref, unimplemented!(), unimplemented!())
+                LLVMOrcAddLazilyCompiledIR(self.jit, &mut module_handle, shared_ref, Some(orc_resolve_symbol), transmute(&self))
             }
         };
 
@@ -117,14 +128,7 @@ impl Orc {
         }
     }
 
-    fn get_last_error<'a>(&'a self) -> OrcError<'a> {
-        let message = unsafe {
-            CStr::from_ptr(LLVMOrcGetErrorMsg(self.jit))
-        }.to_str().unwrap();
-        OrcError { message }
-    }
-
-    fn mangle_symbol(&self, symbol: &str) -> MangledSymbol {
+    pub fn mangle_symbol(&self, symbol: &str) -> MangledSymbol {
         let c_string = CString::new(symbol).unwrap();
         let mut mangled_ptr = unsafe { uninitialized() };
 
@@ -133,6 +137,28 @@ impl Orc {
         }
 
         MangledSymbol::new(mangled_ptr)
+    }
+
+    pub fn get_symbol_address(&self, symbol: &str) -> Result<u64, OrcError> {
+        let c_string = CString::new(symbol).unwrap();
+        let mut address = unsafe { uninitialized() };
+
+        let error_code = unsafe {
+            LLVMOrcGetSymbolAddress(self.jit, &mut address, c_string.as_ptr())
+        };
+
+        if error_code == LLVMOrcErrorCode::LLVMOrcErrSuccess {
+            Ok(address)
+        } else {
+            Err(self.get_last_error())
+        }
+    }
+
+    fn get_last_error<'a>(&'a self) -> OrcError<'a> {
+        let message = unsafe {
+            CStr::from_ptr(LLVMOrcGetErrorMsg(self.jit))
+        }.to_str().unwrap();
+        OrcError { message }
     }
 }
 
