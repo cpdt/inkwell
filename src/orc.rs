@@ -1,4 +1,4 @@
-use llvm_sys::orc::{LLVMOrcJITStackRef, LLVMOrcModuleHandle, LLVMOrcErrorCode, LLVMOrcMakeSharedModule, LLVMOrcDisposeSharedModuleRef, LLVMOrcCreateInstance, LLVMOrcGetErrorMsg, LLVMOrcGetMangledSymbol, LLVMOrcDisposeMangledSymbol, LLVMOrcCreateLazyCompileCallback, LLVMOrcSetIndirectStubPointer, LLVMOrcAddEagerlyCompiledIR, LLVMOrcAddLazilyCompiledIR, LLVMOrcAddObjectFile, LLVMOrcRemoveModule, LLVMOrcGetSymbolAddress, LLVMOrcDisposeInstance};
+use llvm_sys::orc::{LLVMOrcJITStackRef, LLVMOrcModuleHandle, LLVMOrcErrorCode, LLVMOrcTargetAddress, LLVMOrcMakeSharedModule, LLVMOrcDisposeSharedModuleRef, LLVMOrcCreateInstance, LLVMOrcGetErrorMsg, LLVMOrcGetMangledSymbol, LLVMOrcDisposeMangledSymbol, LLVMOrcCreateLazyCompileCallback, LLVMOrcSetIndirectStubPointer, LLVMOrcAddEagerlyCompiledIR, LLVMOrcAddLazilyCompiledIR, LLVMOrcAddObjectFile, LLVMOrcRemoveModule, LLVMOrcGetSymbolAddress, LLVMOrcDisposeInstance};
 use llvm_sys::execution_engine::LLVMLinkInMCJIT;
 use llvm_sys::target_machine::LLVMTargetHasJIT;
 use targets::TargetMachine;
@@ -8,6 +8,11 @@ use std::ffi::{CStr, CString};
 use std::ops::Deref;
 use std::os::raw::c_char;
 use std::fmt;
+
+// some Axiom-specific ORC functions
+extern "C" {
+    pub fn LLVMAxiomOrcGetSymbolAddress(JITStack: LLVMOrcJITStackRef, RetAddr: *mut LLVMOrcTargetAddress, SymbolName: *const ::libc::c_char) -> LLVMOrcErrorCode;
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OrcError<'a> {
@@ -76,11 +81,14 @@ pub type OrcModuleKey = LLVMOrcModuleHandle;
 extern "C" fn orc_resolve_symbol(name: *const ::libc::c_char, ctx: *mut ::libc::c_void) -> u64 {
     let orc: &Orc = unsafe { transmute(ctx) };
 
+    println!("Resolving symbol {}", unsafe { CStr::from_ptr(name).to_string_lossy() });
+
     let mut address = unsafe { uninitialized() };
     let error_code = unsafe {
         LLVMOrcGetSymbolAddress(orc.jit, &mut address, name)
     };
     assert_eq!(error_code, LLVMOrcErrorCode::LLVMOrcErrSuccess);
+
     address
 }
 
@@ -148,7 +156,7 @@ impl Orc {
         let mut address = unsafe { uninitialized() };
 
         let error_code = unsafe {
-            LLVMOrcGetSymbolAddress(self.jit, &mut address, c_string.as_ptr())
+            LLVMAxiomOrcGetSymbolAddress(self.jit, &mut address, c_string.as_ptr())
         };
 
         if error_code == LLVMOrcErrorCode::LLVMOrcErrSuccess {

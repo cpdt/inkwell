@@ -19,6 +19,11 @@ use std::mem::zeroed;
 use std::path::Path;
 use std::ptr;
 
+// some Axiom-specific target functions
+extern "C" {
+    pub fn LLVMAxiomSelectTarget() -> LLVMTargetMachineRef;
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum CodeModel {
     Default,
@@ -327,6 +332,10 @@ impl TargetMachine {
         TargetMachine {
             target_machine,
         }
+    }
+
+    pub fn select() -> TargetMachine {
+        TargetMachine::new(unsafe { LLVMAxiomSelectTarget() })
     }
 
     pub fn get_target(&self)-> Target {
