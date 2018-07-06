@@ -3,7 +3,7 @@ use llvm_sys::execution_engine::LLVMLinkInMCJIT;
 use llvm_sys::target_machine::LLVMTargetHasJIT;
 use targets::TargetMachine;
 use module::Module;
-use std::mem::{uninitialized, transmute};
+use std::mem::{uninitialized, transmute, forget};
 use std::ffi::{CStr, CString};
 use std::ops::Deref;
 use std::os::raw::c_char;
@@ -93,8 +93,12 @@ impl Orc {
 
     pub fn new(target: TargetMachine) -> Self {
         assert!(target.get_target().has_jit());
+
+        // LLVMOrcCreateInstance takes ownership of `target`
+        let target_ref = target.target_machine;
+        forget(target);
         Orc {
-            jit: unsafe { LLVMOrcCreateInstance(target.release()) }
+            jit: unsafe { LLVMOrcCreateInstance(target_ref) }
         }
     }
 

@@ -317,7 +317,7 @@ impl Target {
 
 #[derive(Debug)]
 pub struct TargetMachine {
-    target_machine: LLVMTargetMachineRef,
+    pub(crate) target_machine: LLVMTargetMachineRef,
 }
 
 impl TargetMachine {
@@ -403,10 +403,6 @@ impl TargetMachine {
         }
 
         Ok(())
-    }
-
-    pub(crate) fn release(self) -> LLVMTargetMachineRef {
-        self.target_machine
     }
 }
 
