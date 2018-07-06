@@ -528,13 +528,15 @@ impl Module {
     }
 
     pub(crate) fn make_shared(&self) -> LLVMSharedModuleRef {
-        if let Some(shared_ref) = *self.shared_ref.borrow() {
-            shared_ref
-        } else {
-            let shared_ref = unsafe { LLVMOrcMakeSharedModule(self.module.get()) };
-            *self.shared_ref.borrow_mut() = Some(shared_ref);
-            shared_ref
+        {
+            if let Some(shared_ref) = *self.shared_ref.borrow() {
+                return shared_ref;
+            }
         }
+
+        let shared_ref = unsafe { LLVMOrcMakeSharedModule(self.module.get()) };
+        *self.shared_ref.borrow_mut() = Some(shared_ref);
+        shared_ref
     }
 }
 
