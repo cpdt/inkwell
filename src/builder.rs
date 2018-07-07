@@ -10,6 +10,12 @@ use types::{AsTypeRef, BasicType, PointerType, IntMathType, FloatMathType, Point
 
 use std::ffi::CString;
 
+// some Axiom-specific builder functions
+extern "C" {
+    pub fn LLVMAxiomSetFastMathFlags(builder: LLVMBuilderRef, allow_reassoc: bool, no_nans: bool, no_infs: bool, no_signed_zeros: bool, allow_reciprocal: bool, allow_contract: bool, approx_func: bool);
+    pub fn LLVMAxiomSetAllFastMathFlags(builder: LLVMBuilderRef);
+}
+
 #[derive(Debug)]
 pub struct Builder {
     builder: LLVMBuilderRef,
@@ -30,6 +36,18 @@ impl Builder {
         };
 
         Builder::new(builder)
+    }
+
+    pub fn set_fast_math(&self, allow_reassoc: bool, no_nans: bool, no_infs: bool, no_signed_zeros: bool, allow_reciprocal: bool, allow_contract: bool, approx_func: bool) {
+        unsafe {
+            LLVMAxiomSetFastMathFlags(self.builder, allow_reassoc, no_nans, no_infs, no_signed_zeros, allow_reciprocal, allow_contract, approx_func);
+        }
+    }
+
+    pub fn set_fast_math_all(&self) {
+        unsafe {
+            LLVMAxiomSetAllFastMathFlags(self.builder);
+        }
     }
 
     // REVIEW: Would probably make this API a bit simpler by taking Into<Option<impl BasicValue>>
