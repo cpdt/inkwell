@@ -44,6 +44,11 @@ impl Orc {
         }
     }
 
+    pub fn add_builtin(&self, name: &str, address: LLVMOrcTargetAddress) {
+        let c_string = CString::new(name).unwrap();
+        unsafe { LLVMAxiomOrcAddBuiltin(self.jit, c_string.as_ptr(), address) }
+    }
+
     pub fn add_module(&self, module: &Module) -> OrcModuleKey {
         unsafe { LLVMAxiomOrcAddModule(self.jit, module.make_shared()) }
     }
