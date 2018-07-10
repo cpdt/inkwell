@@ -1,6 +1,6 @@
 use llvm_sys::analysis::{LLVMVerifyModule, LLVMVerifierFailureAction};
 use llvm_sys::bit_writer::{LLVMWriteBitcodeToFile, LLVMWriteBitcodeToMemoryBuffer};
-use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile, LLVMSetModuleInlineAsm};
+use llvm_sys::core::{LLVMAddFunction, LLVMAddGlobal, LLVMDumpModule, LLVMGetNamedFunction, LLVMGetTypeByName, LLVMSetDataLayout, LLVMSetTarget, LLVMCloneModule, LLVMDisposeModule, LLVMGetTarget, LLVMModuleCreateWithName, LLVMGetModuleContext, LLVMGetFirstFunction, LLVMGetLastFunction, LLVMSetLinkage, LLVMAddGlobalInAddressSpace, LLVMPrintModuleToString, LLVMGetNamedMetadataNumOperands, LLVMAddNamedMetadataOperand, LLVMGetNamedMetadataOperands, LLVMGetFirstGlobal, LLVMGetLastGlobal, LLVMGetNamedGlobal, LLVMPrintModuleToFile, LLVMSetModuleInlineAsm, LLVMGetModuleIdentifier};
 use llvm_sys::orc::{LLVMSharedModuleRef, LLVMOrcMakeSharedModule, LLVMOrcDisposeSharedModuleRef};
 use llvm_sys::prelude::{LLVMValueRef, LLVMModuleRef};
 use llvm_sys::LLVMLinkage;
@@ -169,6 +169,11 @@ impl Module {
         }
 
         FunctionValue::new(value).expect("add_function should always succeed in adding a new function")
+    }
+
+    pub fn get_name(&self) -> &str {
+        let mut str_len: usize = 0;
+        unsafe { CStr::from_ptr(LLVMGetModuleIdentifier(self.module.get(), &mut str_len)) }.to_str().unwrap()
     }
 
     /// Gets the `Context` from which this `Module` originates.
