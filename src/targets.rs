@@ -10,7 +10,7 @@ use memory_buffer::MemoryBuffer;
 use module::Module;
 use passes::PassManager;
 use support::LLVMString;
-use types::{AnyType, AsTypeRef, StructType, PointerType};
+use types::{AnyType, AsTypeRef, StructType, PointerType, IntType};
 use values::{AsValueRef, GlobalValue};
 
 use std::default::Default;
@@ -448,36 +448,36 @@ impl TargetData {
         }
     }
 
-    pub fn int_ptr_type(&self) -> PointerType {
+    pub fn int_ptr_type(&self) -> IntType {
         let ptr_type = unsafe {
             LLVMIntPtrType(self.target_data)
         };
 
-        PointerType::new(ptr_type)
+        IntType::new(ptr_type)
     }
 
-    pub fn int_ptr_type_for_as(&self, as_: u32) -> PointerType {
+    pub fn int_ptr_type_for_as(&self, as_: u32) -> IntType {
         let ptr_type = unsafe {
             LLVMIntPtrTypeForAS(self.target_data, as_)
         };
 
-        PointerType::new(ptr_type)
+        IntType::new(ptr_type)
     }
 
-    pub fn int_ptr_type_in_context(&self, context: &Context) -> PointerType {
+    pub fn int_ptr_type_in_context(&self, context: &Context) -> IntType {
         let ptr_type = unsafe {
             LLVMIntPtrTypeInContext(*context.context, self.target_data)
         };
 
-        PointerType::new(ptr_type)
+        IntType::new(ptr_type)
     }
 
-    pub fn int_ptr_type_for_as_in_context(&self, context: &Context, as_: u32) -> PointerType {
+    pub fn int_ptr_type_for_as_in_context(&self, context: &Context, as_: u32) -> IntType {
         let ptr_type = unsafe {
             LLVMIntPtrTypeForASInContext(*context.context, self.target_data, as_)
         };
 
-        PointerType::new(ptr_type)
+        IntType::new(ptr_type)
     }
 
     pub fn get_data_layout(&self) -> DataLayout {
