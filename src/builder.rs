@@ -929,7 +929,7 @@ impl Builder {
         }
     }
 
-    pub fn build_select<T: BasicValue>(&self, condition: IntValue, then: T, or: T, name: &str) -> BasicValueEnum {
+    pub fn build_select<T: BasicValue>(&self, condition: impl IntMathValue, then: T, or: T, name: &str) -> BasicValueEnum {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
