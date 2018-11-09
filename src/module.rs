@@ -66,7 +66,7 @@ impl Linkage {
         }
     }
 
-    fn as_llvm_linkage(&self) -> LLVMLinkage {
+    pub fn as_llvm_linkage(&self) -> LLVMLinkage {
         match *self {
             Linkage::AppendingLinkage => LLVMLinkage::LLVMAppendingLinkage,
             Linkage::AvailableExternallyLinkage => LLVMLinkage::LLVMAvailableExternallyLinkage,
