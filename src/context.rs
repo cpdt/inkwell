@@ -301,7 +301,7 @@ impl Context {
         let constraints_c_string = CString::new(constraints).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
-            LLVMConstInlineAsm(ret_type.as_type_ref(), asm_str.as_ptr()as *const _, constraints_c_string.as_ptr() as *const _, has_side_effects as i32, is_align_stack as i32)
+            LLVMConstInlineAsm(ret_type.as_type_ref(), asm_c_string.as_ptr(), constraints_c_string.as_ptr(), has_side_effects as i32, is_align_stack as i32)
         };
 
         AsmValue::new(value)
