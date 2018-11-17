@@ -1,5 +1,5 @@
 use llvm_sys::analysis::{LLVMVerifierFailureAction, LLVMVerifyFunction, LLVMViewFunctionCFG, LLVMViewFunctionCFGOnly};
-use llvm_sys::core::{LLVMIsAFunction, LLVMIsConstant, LLVMGetLinkage, LLVMTypeOf, LLVMGetPreviousFunction, LLVMSetLinkage, LLVMIsDeclaration, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMGetReturnType, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetElementType, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetEntryBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC, LLVMAddAttributeAtIndex};
+use llvm_sys::core::{LLVMIsAFunction, LLVMIsAInlineAsm, LLVMIsConstant, LLVMGetLinkage, LLVMTypeOf, LLVMGetPreviousFunction, LLVMSetLinkage, LLVMIsDeclaration, LLVMGetNextFunction, LLVMGetParam, LLVMCountParams, LLVMGetLastParam, LLVMCountBasicBlocks, LLVMGetFirstParam, LLVMGetNextParam, LLVMGetBasicBlocks, LLVMGetReturnType, LLVMAppendBasicBlock, LLVMDeleteFunction, LLVMGetElementType, LLVMGetLastBasicBlock, LLVMGetFirstBasicBlock, LLVMGetEntryBasicBlock, LLVMGetIntrinsicID, LLVMGetFunctionCallConv, LLVMSetFunctionCallConv, LLVMGetGC, LLVMSetGC, LLVMAddAttributeAtIndex};
 #[cfg(not(feature = "llvm3-6"))]
 use llvm_sys::core::{LLVMGetPersonalityFn, LLVMSetPersonalityFn};
 use llvm_sys::prelude::{LLVMValueRef, LLVMBasicBlockRef};
@@ -29,7 +29,7 @@ impl FunctionValue {
         }
 
         unsafe {
-            assert!(!LLVMIsAFunction(value).is_null())
+            assert!(!LLVMIsAFunction(value).is_null() || !LLVMIsAInlineAsm(value).is_null())
         }
 
         Some(FunctionValue { fn_value: Value::new(value) })
