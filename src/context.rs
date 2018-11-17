@@ -1,4 +1,4 @@
-use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext, LLVMCreateEnumAttribute, LLVMCreateStringAttribute};
+use llvm_sys::core::{LLVMAppendBasicBlockInContext, LLVMConstInlineAsm, LLVMContextCreate, LLVMContextDispose, LLVMCreateBuilderInContext, LLVMDoubleTypeInContext, LLVMFloatTypeInContext, LLVMFP128TypeInContext, LLVMInsertBasicBlockInContext, LLVMInt16TypeInContext, LLVMInt1TypeInContext, LLVMInt32TypeInContext, LLVMInt64TypeInContext, LLVMInt8TypeInContext, LLVMIntTypeInContext, LLVMModuleCreateWithNameInContext, LLVMStructCreateNamed, LLVMStructTypeInContext, LLVMVoidTypeInContext, LLVMHalfTypeInContext, LLVMGetGlobalContext, LLVMPPCFP128TypeInContext, LLVMConstStructInContext, LLVMMDNodeInContext, LLVMMDStringInContext, LLVMGetMDKindIDInContext, LLVMCreateEnumAttribute, LLVMCreateStringAttribute};
 use llvm_sys::prelude::{LLVMContextRef, LLVMTypeRef, LLVMValueRef};
 use llvm_sys::ir_reader::LLVMParseIRInContext;
 
@@ -8,7 +8,7 @@ use memory_buffer::MemoryBuffer;
 use module::Module;
 use support::LLVMString;
 use types::{BasicType, FloatType, IntType, StructType, VoidType};
-use values::{AsValueRef, BasicValue, FunctionValue, StructValue, MetadataValue};
+use values::{AsValueRef, BasicValue, FunctionValue, StructValue, MetadataValue, AsmValue};
 use attribute::{AttrKind, Attribute};
 
 use std::ffi::{CStr, CString};
@@ -294,6 +294,17 @@ impl Context {
         };
 
         StructValue::new(value)
+    }
+
+    pub fn const_asm(&self, ret_type: &BasicType, asm_str: &str, constraints: &str, has_side_effects: bool, is_align_stack: bool) -> AsmValue {
+        let asm_c_string = CString::new(asm_str).expect("Conversion to CString failed unexpectedly");
+        let constraints_c_string = CString::new(constraints).expect("Conversion to CString failed unexpectedly");
+
+        let value = unsafe {
+            LLVMConstInlineAsm(ret_type.as_type_ref(), asm_str.as_ptr()as *const _, constraints_c_string.as_ptr() as *const _, has_side_effects as i32, is_align_stack as i32)
+        };
+
+        AsmValue::new(value)
     }
 
     // REVIEW: Maybe more helpful to beginners to call this metadata_tuple?

@@ -1,4 +1,5 @@
 mod array_value;
+mod asm_value;
 mod enums;
 mod float_value;
 mod fn_value;
@@ -14,6 +15,7 @@ mod traits;
 mod vec_value;
 
 pub use values::array_value::ArrayValue;
+pub use values::asm_value::AsmValue;
 pub use values::enums::{AnyValueEnum, AggregateValueEnum, BasicValueEnum, BasicMetadataValueEnum};
 pub use values::float_value::FloatValue;
 pub use values::fn_value::FunctionValue;
