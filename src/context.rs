@@ -8,7 +8,7 @@ use memory_buffer::MemoryBuffer;
 use module::Module;
 use support::LLVMString;
 use types::{BasicType, FloatType, IntType, StructType, VoidType};
-use values::{AsValueRef, BasicValue, FunctionValue, StructValue, MetadataValue, AsmValue};
+use values::{AsValueRef, BasicValue, FunctionValue, StructValue, MetadataValue};
 use attribute::{AttrKind, Attribute};
 
 use std::ffi::{CStr, CString};

@@ -9,8 +9,7 @@ use context::ContextRef;
 use support::LLVMString;
 use types::traits::AsTypeRef;
 use types::{Type, BasicTypeEnum};
-use values::AsmValue;
-// use values::FunctionValue;
+use values::FunctionValue;
 
 #[derive(PartialEq, Eq, Clone, Copy)]
 pub struct FunctionType {
@@ -67,7 +66,7 @@ impl FunctionType {
         self.fn_type.print_to_string()
     }
 
-    pub fn as_asm(self, asm_str: &str, constraints: &str, has_side_effects: bool, is_align_stack: bool) -> AsmValue {
+    pub fn as_asm(self, asm_str: &str, constraints: &str, has_side_effects: bool, is_align_stack: bool) -> FunctionValue {
         let asm_c_string = CString::new(asm_str).expect("Conversion to CString failed unexpectedly");
         let constraints_c_string = CString::new(constraints).expect("Conversion to CString failed unexpectedly");
 
@@ -75,7 +74,7 @@ impl FunctionType {
             LLVMConstInlineAsm(self.as_type_ref(), asm_c_string.as_ptr(), constraints_c_string.as_ptr(), has_side_effects as i32, is_align_stack as i32)
         };
 
-        AsmValue::new(value)
+        FunctionValue::new(value).unwrap()
     }
 
     // See Type::print_to_stderr note on 5.0+ status

@@ -5,7 +5,7 @@ use llvm_sys::{LLVMTypeKind, LLVMAtomicOrdering};
 
 use {IntPredicate, FloatPredicate};
 use basic_block::BasicBlock;
-use values::{AggregateValue, AsmValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, StructValue, InstructionOpcode};
+use values::{AggregateValue, AsValueRef, BasicValue, BasicValueEnum, PhiValue, FunctionValue, IntValue, PointerValue, VectorValue, InstructionValue, GlobalValue, IntMathValue, FloatMathValue, PointerMathValue, StructValue, InstructionOpcode};
 use types::{AsTypeRef, BasicType, PointerType, IntMathType, FloatMathType, PointerMathType};
 
 use std::ffi::CString;
@@ -102,28 +102,6 @@ impl Builder {
                 LLVMSetInstructionCallConv(value, 8)
             }
         }
-
-        unsafe {
-            match LLVMGetTypeKind(LLVMTypeOf(value)) {
-                LLVMTypeKind::LLVMVoidTypeKind => Either::Right(InstructionValue::new(value)),
-                _ => Either::Left(BasicValueEnum::new(value)),
-            }
-        }
-    }
-
-    pub fn build_asm(&self, asm: &AsmValue, args: &[&BasicValue], name: &str) -> Either<BasicValueEnum, InstructionValue> {
-        let name = unsafe {
-            match LLVMGetTypeKind(LLVMGetReturnType(LLVMGetElementType(LLVMTypeOf(asm.as_value_ref())))) {
-                LLVMTypeKind::LLVMVoidTypeKind => "",
-                _ => name,
-            }
-        };
-
-        let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
-        let mut args: Vec<LLVMValueRef> = args.iter().map(|val| val.as_value_ref()).collect();
-        let value = unsafe {
-            LLVMBuildCall(self.builder, asm.as_value_ref(), args.as_mut_ptr(), args.len() as u32, c_string.as_ptr())
-        };
 
         unsafe {
             match LLVMGetTypeKind(LLVMTypeOf(value)) {
