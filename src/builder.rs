@@ -113,7 +113,7 @@ impl Builder {
 
     // REVIEW: Doesn't GEP work on array too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    pub unsafe fn build_gep(&self, ptr: &PointerValue, ordered_indexes: &[IntValue], name: &str) -> PointerValue {
+    pub unsafe fn build_gep<T: IntMathValue>(&self, ptr: &PointerValue, ordered_indexes: &[T], name: &str) -> <<T::BaseType as IntMathType>::PtrConvType as PointerMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
@@ -123,12 +123,12 @@ impl Builder {
             LLVMBuildGEP(self.builder, ptr.as_value_ref(), index_values.as_mut_ptr(), index_values.len() as u32, c_string.as_ptr())
         };
 
-        PointerValue::new(value)
+        <<T::BaseType as IntMathType>::PtrConvType as PointerMathType>::ValueType::new(value)
     }
 
     // REVIEW: Doesn't GEP work on array too?
     /// GEP is very likely to segfault if indexes are used incorrectly, and is therefore an unsafe function. Maybe we can change this in the future.
-    pub unsafe fn build_in_bounds_gep(&self, ptr: &PointerValue, ordered_indexes: &[IntValue], name: &str) -> PointerValue {
+    pub unsafe fn build_in_bounds_gep<T: IntMathValue>(&self, ptr: &PointerValue, ordered_indexes: &[T], name: &str) -> <<T::BaseType as IntMathType>::PtrConvType as PointerMathType>::ValueType {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let mut index_values: Vec<LLVMValueRef> = ordered_indexes.iter()
@@ -138,7 +138,7 @@ impl Builder {
             LLVMBuildInBoundsGEP(self.builder, ptr.as_value_ref(), index_values.as_mut_ptr(), index_values.len() as u32, c_string.as_ptr())
         };
 
-        PointerValue::new(value)
+        <<T::BaseType as IntMathType>::PtrConvType as PointerMathType>::ValueType::new(value)
     }
 
     // REVIEW: Shouldn't this take a StructValue? Or does it still need to be PointerValue<StructValue>?
