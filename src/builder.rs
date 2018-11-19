@@ -181,7 +181,7 @@ impl Builder {
         InstructionValue::new(value)
     }
 
-    pub fn build_load(&self, ptr: &PointerValue, name: &str) -> BasicValueEnum {
+    pub fn build_load<T: PointerMathValue>(&self, ptr: &T, name: &str) -> BasicValueEnum {
         let c_string = CString::new(name).expect("Conversion to CString failed unexpectedly");
 
         let value = unsafe {
