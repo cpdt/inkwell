@@ -1,5 +1,5 @@
 use llvm_sys::LLVMThreadLocalMode;
-use llvm_sys::core::{LLVMGetVisibility, LLVMSetVisibility, LLVMGetSection, LLVMSetSection, LLVMIsExternallyInitialized, LLVMSetExternallyInitialized, LLVMDeleteGlobal, LLVMIsGlobalConstant, LLVMSetGlobalConstant, LLVMGetPreviousGlobal, LLVMGetNextGlobal, LLVMHasUnnamedAddr, LLVMSetUnnamedAddr, LLVMIsThreadLocal, LLVMSetThreadLocal, LLVMGetThreadLocalMode, LLVMSetThreadLocalMode, LLVMGetInitializer, LLVMSetInitializer, LLVMIsDeclaration, LLVMGetDLLStorageClass, LLVMSetDLLStorageClass};
+use llvm_sys::core::{LLVMGetVisibility, LLVMGetLinkage, LLVMSetLinkage, LLVMSetVisibility, LLVMGetSection, LLVMSetSection, LLVMIsExternallyInitialized, LLVMSetExternallyInitialized, LLVMDeleteGlobal, LLVMIsGlobalConstant, LLVMSetGlobalConstant, LLVMGetPreviousGlobal, LLVMGetNextGlobal, LLVMHasUnnamedAddr, LLVMSetUnnamedAddr, LLVMIsThreadLocal, LLVMSetThreadLocal, LLVMGetThreadLocalMode, LLVMSetThreadLocalMode, LLVMGetInitializer, LLVMSetInitializer, LLVMIsDeclaration, LLVMGetDLLStorageClass, LLVMSetDLLStorageClass};
 use llvm_sys::prelude::LLVMValueRef;
 
 use std::ffi::{CString, CStr};
@@ -7,6 +7,7 @@ use std::ffi::{CString, CStr};
 use {GlobalVisibility, ThreadLocalMode, DLLStorageClass};
 use values::traits::AsValueRef;
 use values::{BasicValueEnum, BasicValue, PointerValue, Value};
+use module::Linkage;
 
 // REVIEW: GlobalValues are always PointerValues. With SubTypes, we should
 // compress this into a PointerValue<Global> type
@@ -22,6 +23,24 @@ impl GlobalValue {
         GlobalValue {
             global_value: Value::new(value),
         }
+    }
+
+    pub fn get_linkage(&self) -> Linkage {
+        let linkage = unsafe {
+            LLVMGetLinkage(self.as_value_ref())
+        };
+
+        Linkage::new(linkage)
+    }
+
+    pub fn set_linkage(&self, linkage: Linkage) {
+        unsafe {
+            LLVMSetLinkage(self.as_value_ref(), linkage.as_llvm_linkage())
+        };
+    }
+
+    pub fn get_name(&self) -> &CStr {
+        self.global_value.get_name()
     }
 
     pub fn get_previous_global(&self) -> Option<GlobalValue> {
